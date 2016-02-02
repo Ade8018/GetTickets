@@ -36,6 +36,13 @@
                 android:gravity="center_vertical"
                 android:paddingLeft="10dp"
                 android:text="Start refresh" />
+            <TextView
+                android:id="@+id/tv_stop_refresh"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:gravity="center_vertical"
+                android:paddingLeft="10dp"
+                android:text="Stop refresh" />
         </LinearLayout>
     </android.support.v4.widget.DrawerLayout>
 

@@ -17,6 +17,7 @@ public final class R {
         public static final int dl=0x7f050000;
         public static final int tv_select_train=0x7f050002;
         public static final int tv_start_refresh=0x7f050003;
+        public static final int tv_stop_refresh=0x7f050004;
         public static final int wv=0x7f050001;
     }
     public static final class layout {

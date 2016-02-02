@@ -9,14 +9,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnMultiChoiceClickListener;
-import android.util.Log;
-
 public class Utils {
 	public static List<Train> getTrainInfos(String html) {
 		try {
-			Document doc = Jsoup.parse(html); 
+			Document doc = Jsoup.parse(html);
 			List<Node> nodes = doc.child(0).child(1).childNodes();
 			List<Train> trains = new ArrayList<Train>();
 			int lastTrainIndex = -1;
@@ -39,7 +35,7 @@ public class Utils {
 					}
 				} else if (node instanceof TextNode) {
 					TextNode tn = (TextNode) node;
-					if ("预订".equals(tn.text())) {
+					if ("预订".equals(tn.text()) || tn.text().contains("系统维护时间")) {
 						trains.get(lastTrainIndex).hasSeat = false;
 						isLastTrianFindTicketLeftInfo = true;
 					}

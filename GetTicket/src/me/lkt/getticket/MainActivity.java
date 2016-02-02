@@ -9,10 +9,14 @@ import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
+import android.media.AudioAttributes;
 import android.net.http.SslError;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.os.Vibrator;
+import android.os.PowerManager.WakeLock;
 import android.support.v4.widget.DrawerLayout;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -21,7 +25,6 @@ import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +37,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	private DrawerLayout dl;
 	private List<String> mSelectedTrainNumbers;
 	private boolean isRefreshing;
+	private PowerManager pm;
+	private WakeLock wl;
+	Vibrator vibrator;
 	private WebViewClient mWbClient = new WebViewClient() {
 		@Override
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -42,8 +48,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 
 		@Override
-		public void onReceivedSslError(WebView view, SslErrorHandler handler,
-				SslError error) {
+		public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 			handler.proceed();
 		}
 
@@ -58,6 +63,11 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		pm = (PowerManager) getSystemService(POWER_SERVICE);
+		wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "wake lock");
+		wl.acquire();
+
+		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
 		builder = new Builder(this);
 		builder.setTitle("Select Train");
@@ -88,6 +98,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			startNextRefresh();
 		} else if (v == tvStopRefresh) {
 			isRefreshing = false;
+			vibrator.cancel();
 		}
 		if (dl.isShown()) {
 			dl.closeDrawers();
@@ -106,27 +117,23 @@ public class MainActivity extends Activity implements OnClickListener {
 				checkedItems[i] = false;
 			}
 			final List<String> selectedTrainNumbers = new ArrayList<String>();
-			builder.setMultiChoiceItems(items, checkedItems,
-					new OnMultiChoiceClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which,
-								boolean isChecked) {
-							if (isChecked) {
-								selectedTrainNumbers.add(trains.get(which).name);
-							} else {
-								selectedTrainNumbers.remove(trains.get(which).name);
-							}
-						}
-					});
-			builder.setPositiveButton("确定",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							mSelectedTrainNumbers = selectedTrainNumbers;
-							Log.e("lkt", "selected train:"
-									+ mSelectedTrainNumbers.toString());
-						}
-					});
+			builder.setMultiChoiceItems(items, checkedItems, new OnMultiChoiceClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+					if (isChecked) {
+						selectedTrainNumbers.add(trains.get(which).name);
+					} else {
+						selectedTrainNumbers.remove(trains.get(which).name);
+					}
+				}
+			});
+			builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					mSelectedTrainNumbers = selectedTrainNumbers;
+					Log.e("lkt", "selected train:" + mSelectedTrainNumbers.toString());
+				}
+			});
 			builder.create().show();
 		}
 
@@ -158,13 +165,13 @@ public class MainActivity extends Activity implements OnClickListener {
 			public void run() {
 				clickQuery();
 			}
-		}, 1888);
+		}, 888);
 		tvSelectTrain.postDelayed(new Runnable() {
 			@Override
 			public void run() {
 				checkInfo();
 			}
-		}, 2222);
+		}, 1666);
 	}
 
 	public void clickQuery() {
@@ -178,9 +185,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	public void onTicketFound() {
 		Log.e("lkt", "stopRefresh");
 		Toast.makeText(this, "ticket found !", Toast.LENGTH_LONG).show();
-		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-		v.vibrate(new long[] { 50, 200, 20, 100 }, 0);
-		// v.vibrate(100000);
+		vibrator.vibrate(new long[] { 50, 100, 50, 100 }, 0);
 	}
 
+	@Override
+	protected void onDestroy() {
+		wl.release();
+		super.onDestroy();
+	}
 }
