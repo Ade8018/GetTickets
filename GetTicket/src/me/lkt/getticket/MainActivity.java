@@ -6,10 +6,12 @@ import java.util.List;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog.Builder;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.net.http.SslError;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.View;
@@ -160,16 +162,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		}, 1000);
 	}
 
-	// private Handler mHandler = new Handler() {
-	// public void handleMessage(android.os.Message msg) {
-	// if (msg.what == 0) {
-	//
-	// } else if (msg.what == 1) {
-	// checkInfo();
-	// }
-	// };
-	// };
-
 	public void clickQuery() {
 		wv.loadUrl("javascript:document.getElementById('query_ticket').click();");
 	}
@@ -180,8 +172,10 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	public void onTicketFound() {
 		Log.e("lkt", "stopRefresh");
-		startRefreshing = false;
 		Toast.makeText(this, "ticket found !", Toast.LENGTH_LONG).show();
+		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+		v.vibrate(new long[] { 50, 200, 20, 100 }, 0);
+//		v.vibrate(100000);
 	}
 
 }
