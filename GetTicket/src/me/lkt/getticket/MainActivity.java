@@ -29,9 +29,11 @@ public class MainActivity extends Activity implements OnClickListener {
 	private WebView wv;
 	private TextView tvSelectTrain;
 	private TextView tvStartRefresh;
+	private TextView tvStopRefresh;
 	private Builder builder;
 	private DrawerLayout dl;
 	private List<String> mSelectedTrainNumbers;
+	private boolean isRefreshing;
 	private WebViewClient mWbClient = new WebViewClient() {
 		@Override
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -64,8 +66,10 @@ public class MainActivity extends Activity implements OnClickListener {
 		dl = (DrawerLayout) findViewById(R.id.dl);
 		tvSelectTrain = (TextView) findViewById(R.id.tv_select_train);
 		tvStartRefresh = (TextView) findViewById(R.id.tv_start_refresh);
+		tvStopRefresh = (TextView) findViewById(R.id.tv_stop_refresh);
 		tvStartRefresh.setOnClickListener(this);
 		tvSelectTrain.setOnClickListener(this);
+		tvStopRefresh.setOnClickListener(this);
 
 		wv = (WebView) findViewById(R.id.wv);
 		wv.setWebViewClient(mWbClient);
@@ -80,7 +84,10 @@ public class MainActivity extends Activity implements OnClickListener {
 		if (v == tvSelectTrain) {
 			wv.loadUrl("javascript:window.getinfo.onSelectTrains(document.getElementById('queryLeftTable').innerHTML);");
 		} else if (v == tvStartRefresh) {
+			isRefreshing = true;
 			startNextRefresh();
+		} else if (v == tvStopRefresh) {
+			isRefreshing = false;
 		}
 		if (dl.isShown()) {
 			dl.closeDrawers();
@@ -143,6 +150,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	public void startNextRefresh() {
+		if (!isRefreshing) {
+			return;
+		}
 		tvSelectTrain.postDelayed(new Runnable() {
 			@Override
 			public void run() {
@@ -170,7 +180,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		Toast.makeText(this, "ticket found !", Toast.LENGTH_LONG).show();
 		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		v.vibrate(new long[] { 50, 200, 20, 100 }, 0);
-//		v.vibrate(100000);
+		// v.vibrate(100000);
 	}
 
 }
