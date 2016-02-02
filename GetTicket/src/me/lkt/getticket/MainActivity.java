@@ -27,8 +27,6 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity implements OnClickListener {
 	private WebView wv;
-	private Button btn;
-	private boolean startRefreshing;
 	private TextView tvSelectTrain;
 	private TextView tvStartRefresh;
 	private Builder builder;
@@ -128,9 +126,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		@JavascriptInterface
 		public void onCheckInfo(String info) {
 			final List<Train> trains = Utils.getTrainInfos(info);
-			if (trains != null && trains.size() > 0) {
-				startRefreshing = false;
-			}
 			boolean foundTicket = false;
 			for (int i = 0; i < trains.size(); i++) {
 				Train t = trains.get(i);
@@ -153,13 +148,13 @@ public class MainActivity extends Activity implements OnClickListener {
 			public void run() {
 				clickQuery();
 			}
-		}, 500);
+		}, 1888);
 		tvSelectTrain.postDelayed(new Runnable() {
 			@Override
 			public void run() {
 				checkInfo();
 			}
-		}, 1000);
+		}, 2222);
 	}
 
 	public void clickQuery() {
