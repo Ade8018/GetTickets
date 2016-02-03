@@ -151,6 +151,13 @@ public class MainActivity extends Activity implements OnClickListener {
 				+ "var img = document.getElementsByClassName('touclick-image')[1];"
 				+ "window.getinfo.getRandcodePosition(img.x,img.y);");
 	}
+	
+	private void fillPersonalInfo(){
+		wv.loadUrl("javascript:" +
+				"document.getElementById('username').value = '361700704@qq.com';" +
+				"document.getElementById('password').value = '1qazMKO0';" +
+				"document.getElementsByName('randCode')[1].value = '1,1';");
+	}
 
 	public class GetInfo {
 		@JavascriptInterface
