@@ -3,8 +3,8 @@ package me.lkt.getticket.page;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.lkt.getticket.Utils;
 import me.lkt.getticket.entity.Train;
+import me.lkt.getticket.utils.Utils;
 import me.lkt.utils.bitmap.BitmapUtils;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
