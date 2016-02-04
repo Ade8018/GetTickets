@@ -1,6 +1,6 @@
 package me.lkt.getticket.page;
 
-import com.tencent.smtt.sdk.WebView;
+import android.webkit.WebView;
 
 public class PreOrderPage extends WebPage {
 

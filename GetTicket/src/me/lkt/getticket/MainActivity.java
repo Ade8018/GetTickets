@@ -1,42 +1,21 @@
 package me.lkt.getticket;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import me.lkt.getticket.page.TicketListPage;
 import me.lkt.getticket.page.TicketListPage.OnTicketEventListener;
-import me.lkt.utils.bitmap.BitmapUtils;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnMultiChoiceClickListener;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Picture;
-import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Vibrator;
 import android.support.v4.widget.DrawerLayout;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.tencent.smtt.export.external.interfaces.SslError;
-import com.tencent.smtt.export.external.interfaces.SslErrorHandler;
-import com.tencent.smtt.sdk.WebChromeClient;
-import com.tencent.smtt.sdk.WebSettings;
-import com.tencent.smtt.sdk.WebView;
-import com.tencent.smtt.sdk.WebViewClient;
 
 public class MainActivity extends Activity implements OnClickListener,
 		OnTicketEventListener {
@@ -101,7 +80,8 @@ public class MainActivity extends Activity implements OnClickListener,
 	@Override
 	public void onTicketFound() {
 		Toast.makeText(this, "ticket found !", Toast.LENGTH_LONG).show();
-		vibrator.vibrate(new long[] { 50, 100, 50, 100 }, 0);
+		ticketListPage.preorderTicket();
+		ticketListPage.loginIfReady();
 	}
 
 	@Override

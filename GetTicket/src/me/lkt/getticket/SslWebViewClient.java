@@ -1,11 +1,10 @@
 package me.lkt.getticket;
 
+import android.net.http.SslError;
 import android.util.Log;
-
-import com.tencent.smtt.export.external.interfaces.SslError;
-import com.tencent.smtt.export.external.interfaces.SslErrorHandler;
-import com.tencent.smtt.sdk.WebView;
-import com.tencent.smtt.sdk.WebViewClient;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class SslWebViewClient extends WebViewClient {
 	@Override

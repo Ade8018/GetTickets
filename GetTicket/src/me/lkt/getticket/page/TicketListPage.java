@@ -17,9 +17,8 @@ import android.graphics.Rect;
 import android.os.Environment;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
 import android.widget.Toast;
-
-import com.tencent.smtt.sdk.WebView;
 
 public class TicketListPage extends WebPage {
 	public interface OnTicketEventListener {
@@ -30,6 +29,8 @@ public class TicketListPage extends WebPage {
 	private List<String> mSelectedTrainNumbers;
 	private boolean isRefreshing;
 	private OnTicketEventListener listener;
+	private List<Train> trains;
+	private static final int rate = 3;
 
 	public TicketListPage(WebView wv, OnTicketEventListener listener) {
 		super(wv);
@@ -54,49 +55,72 @@ public class TicketListPage extends WebPage {
 	}
 
 	public void preorderTicket() {
-		// click preorder
+		final Train train = getFirstSelectedTrainHasSeat();
+		if (train == null || train.jsOrder == null) {
+			Toast.makeText(wv.getContext(), "尝试预订车票时出错，请从头开始",
+					Toast.LENGTH_LONG).show();
+			return;
+		}
+		wv.post(new Runnable() {
+			@Override
+			public void run() {
+				wv.loadUrl("javascript:" + train.jsOrder + ";");
+			}
+		});
 	}
 
 	public void loginIfReady() {
-		requestRandCodePosition();
+		wv.post(new Runnable() {
+			@Override
+			public void run() {
+				setRandcodePicLoadingListener();
+			}
+		});
 	}
 
 	protected void requestRandCodePosition() {
-		wv.loadUrl("javascript:"
-				+ "var img = document.getElementsByClassName('touclick-image')[1];"
-				+ "window.ticketlist_interface.onGetRandcodePosition(img.x,img.y);");
+		wv.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				wv.loadUrl("javascript:"
+						+ "var img = document.getElementsByClassName('touclick-image')[1];"
+						+ "window.ticketlist_interface.onGetRandcodePosition(img.x,img.y);");
+			}
+		}, 100);
 	}
 
-	private void fillPersonalInfo(String username, String password) {
+	protected void setRandcodePicLoadingListener() {
 		wv.loadUrl("javascript:"
-				+ "document.getElementById('username').value = '" + username
-				+ "';" + "document.getElementById('password').value = '"
-				+ password + "';");
-	}
-
-	private void fillRandcode(String positionStr) {
-		wv.loadUrl("javascript:"
-				+ "document.getElementsByName('randCode')[1].value = '"
-				+ positionStr + "';");
+				+ "var img =  document.getElementsByClassName('touclick-image')[1];"
+				+ "img.onload = function(){"
+				+ "document.getElementById('username').value = '361700704@qq.com';"
+				+ "document.getElementById('password').value = '1qazMKO0';"
+				+ "window.ticketlist_interface.onRandcodeImgLoaded();" + "}");
 	}
 
 	public void captureRandCodePic(int randcodex, int randcodey) {
-		Picture pic = wv.capturePicture();
-		Bitmap bmp = Bitmap.createBitmap(pic.getWidth(), pic.getHeight(),
-				Config.ARGB_8888);
-		Canvas canvas = new Canvas(bmp);
-		pic.draw(canvas);
-		Bitmap code = Bitmap.createBitmap(293, 190, Config.ARGB_8888);
-		Canvas canCode = new Canvas(code);
-		canCode.drawBitmap(bmp, new Rect(randcodex * 2, randcodey * 2,
-				randcodex * 2 + 293 * 2, randcodey * 2 + 190 * 2), new Rect(0,
-				0, 293, 190), null);
-		BitmapUtils.savePicture(code, Environment.getExternalStorageDirectory()
-				.getAbsolutePath(), "capture.bmp");
+		try {
+			Picture pic = wv.capturePicture();
+			Bitmap bmp = Bitmap.createBitmap(pic.getWidth(), pic.getHeight(),
+					Config.ARGB_8888);
+			Canvas canvas = new Canvas(bmp);
+			pic.draw(canvas);
+			Bitmap code = Bitmap.createBitmap(293, 190, Config.ARGB_8888);
+			Canvas canCode = new Canvas(code);
+			canCode.drawBitmap(bmp, new Rect(randcodex * rate,
+					randcodey * rate, randcodex * rate + 293 * rate, randcodey
+							* rate + 190 * rate), new Rect(0, 0, 293, 190),
+					null);
+			BitmapUtils.savePicture(code, Environment
+					.getExternalStorageDirectory().getAbsolutePath(),
+					"capture.bmp");
+		} catch (Exception e) {
+
+		}
 	}
 
 	@JavascriptInterface
-	private void onSelectTrains(String info) {
+	public void onSelectTrains(String info) {
 		final List<Train> trains = Utils.getTrainInfos(info);
 		int count = trains.size();
 		String[] items = new String[count];
@@ -130,8 +154,8 @@ public class TicketListPage extends WebPage {
 	}
 
 	@JavascriptInterface
-	private void onCheckInfo(String info) {
-		final List<Train> trains = Utils.getTrainInfos(info);
+	public void onCheckInfo(String info) {
+		trains = Utils.getTrainInfos(info);
 		boolean foundTicket = false;
 		for (int i = 0; i < trains.size(); i++) {
 			Train t = trains.get(i);
@@ -148,12 +172,30 @@ public class TicketListPage extends WebPage {
 	}
 
 	@JavascriptInterface
-	private void onGetRandcodePosition(int x, int y) {
-		Toast.makeText(wv.getContext(), "x:" + x + ",y:" + y, Toast.LENGTH_LONG)
-				.show();
-		if (x != 0 || y != 0) {
-			captureRandCodePic(x, y);
+	public void onRandcodeImgLoaded() {
+		Log.e("lkt", "onRandcodeImgLoaded ");
+		requestRandCodePosition();
+	}
+
+	@JavascriptInterface
+	public void onGetRandcodePosition(final int x, final int y) {
+		Log.e("lkt", "onGetRandcodePosition " + x + " " + y);
+		if (x == 0 && y == 0) {
+			requestRandCodePosition();
+			return;
 		}
+		wv.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				captureRandCodePic(x, y);
+			}
+		}, 500);
+	}
+
+	private void fillRandcode(String positionStr) {
+		wv.loadUrl("javascript:"
+				+ "document.getElementsByName('randCode')[1].value = '"
+				+ positionStr + "';");
 	}
 
 	private void startNextRefresh() {
@@ -177,5 +219,16 @@ public class TicketListPage extends WebPage {
 	private void onTicketFound() {
 		stopRefresh();
 		listener.onTicketFound();
+	}
+
+	private Train getFirstSelectedTrainHasSeat() {
+		Train train = null;
+		for (int i = 0; i < trains.size(); i++) {
+			train = trains.get(i);
+			if (mSelectedTrainNumbers.contains(train.name) && train.hasSeat) {
+				return train;
+			}
+		}
+		return null;
 	}
 }

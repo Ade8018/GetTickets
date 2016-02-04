@@ -4,6 +4,7 @@ public class Train {
 	public String name;
 	public String startTime;
 	public boolean hasSeat;
+	public String jsOrder;
 
 	@Override
 	public String toString() {
