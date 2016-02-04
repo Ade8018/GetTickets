@@ -3,6 +3,8 @@ package me.lkt.getticket;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.lkt.getticket.entity.Train;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

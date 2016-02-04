@@ -1,9 +1,9 @@
-package me.lkt.getticket;
+package me.lkt.getticket.entity;
 
 public class Train {
-	String name;
-	String startTime;
-	boolean hasSeat;
+	public String name;
+	public String startTime;
+	public boolean hasSeat;
 
 	@Override
 	public String toString() {

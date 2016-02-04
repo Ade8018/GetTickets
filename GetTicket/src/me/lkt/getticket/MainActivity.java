@@ -3,6 +3,8 @@ package me.lkt.getticket;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.lkt.getticket.page.TicketListPage;
+import me.lkt.getticket.page.TicketListPage.OnTicketEventListener;
 import me.lkt.utils.bitmap.BitmapUtils;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -36,41 +38,19 @@ import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 import com.tencent.smtt.sdk.WebViewClient;
 
-public class MainActivity extends Activity implements OnClickListener {
+public class MainActivity extends Activity implements OnClickListener,
+		OnTicketEventListener {
 	private WebView wv;
 	private TextView tvSelectTrain;
 	private TextView tvStartRefresh;
 	private TextView tvStopRefresh;
 	private TextView tvGetRandcodePosition;
 	private TextView tvCaptureRandcode;
-	private Builder builder;
 	private DrawerLayout dl;
-	private List<String> mSelectedTrainNumbers;
-	private boolean isRefreshing;
 	private PowerManager pm;
 	private WakeLock wl;
 	private Vibrator vibrator;
-	private int randcodex;
-	private int randcodey;
-
-	private WebViewClient mWbClient = new WebViewClient() {
-		@Override
-		public boolean shouldOverrideUrlLoading(WebView view, String url) {
-			view.loadUrl(url);
-			return true;
-		}
-
-		@Override
-		public void onReceivedSslError(WebView view, SslErrorHandler handler,
-				SslError error) {
-			handler.proceed();
-		}
-
-		@Override
-		public void onPageFinished(WebView paramWebView, String paramString) {
-			Log.e("lkt", "onScaleChanged");
-		}
-	};
+	private TicketListPage ticketListPage;
 
 	@SuppressLint("JavascriptInterface")
 	@Override
@@ -82,10 +62,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		wl.acquire();
 
 		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-
-		builder = new Builder(this);
-		builder.setTitle("Select Train");
-		builder.setCancelable(true);
 
 		dl = (DrawerLayout) findViewById(R.id.dl);
 		tvSelectTrain = (TextView) findViewById(R.id.tv_select_train);
@@ -100,163 +76,37 @@ public class MainActivity extends Activity implements OnClickListener {
 		tvStopRefresh.setOnClickListener(this);
 
 		wv = (WebView) findViewById(R.id.wv);
-		wv.setWebViewClient(mWbClient);
+		wv.setWebViewClient(new SslWebViewClient());
 		wv.setWebChromeClient(new WebChromeClient());
 		wv.getSettings().setJavaScriptEnabled(true);
-		// wv.getSettings().setBuiltInZoomControls(true);
-		wv.getSettings().setBlockNetworkImage(false);
-		wv.getSettings().setAppCacheEnabled(true);
-		wv.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
-		wv.addJavascriptInterface(new GetInfo(), "getinfo");
 		wv.loadUrl("https://kyfw.12306.cn/otn/leftTicket/init");
+
+		ticketListPage = new TicketListPage(wv, this);
 	}
 
 	@Override
 	public void onClick(View v) {
 		if (v == tvSelectTrain) {
-			wv.loadUrl("javascript:window.getinfo.onSelectTrains(document.getElementById('queryLeftTable').innerHTML);");
+			ticketListPage.requestToSelectTrains();
 		} else if (v == tvStartRefresh) {
-			isRefreshing = true;
-			startNextRefresh();
+			ticketListPage.startRefresh();
 		} else if (v == tvStopRefresh) {
-			isRefreshing = false;
-			vibrator.cancel();
-		} else if (v == tvGetRandcodePosition) {
-			onGetRandcodePosition();
-		} else if (v == tvCaptureRandcode) {
-			onCapture();
+			ticketListPage.stopRefresh();
 		}
 		if (dl.isShown()) {
 			dl.closeDrawers();
 		}
 	}
 
-	private void onCapture() {
-		Picture pic = wv.capturePicture();
-		Bitmap bmp = Bitmap.createBitmap(pic.getWidth(), pic.getHeight(),
-				Config.ARGB_8888);
-		Canvas canvas = new Canvas(bmp);
-		pic.draw(canvas);
-		Bitmap code = Bitmap.createBitmap(293, 190, Config.ARGB_8888);
-		Canvas canCode = new Canvas(code);
-		canCode.drawBitmap(bmp, new Rect(randcodex * 2, randcodey * 2,
-				randcodex * 2 + 293 * 2, randcodey * 2 + 190 * 2), new Rect(0,
-				0, 293, 190), null);
-		BitmapUtils.savePicture(code, Environment.getExternalStorageDirectory()
-				.getAbsolutePath(), "capture.bmp");
-	}
-
-	private void onGetRandcodePosition() {
-		wv.loadUrl("javascript:"
-				+ "var img = document.getElementsByClassName('touclick-image')[1];"
-				+ "window.getinfo.getRandcodePosition(img.x,img.y);");
-	}
-	
-	private void fillPersonalInfo(){
-		wv.loadUrl("javascript:" +
-				"document.getElementById('username').value = '361700704@qq.com';" +
-				"document.getElementById('password').value = '1qazMKO0';" +
-				"document.getElementsByName('randCode')[1].value = '1,1';");
-	}
-
-	public class GetInfo {
-		@JavascriptInterface
-		public void onSelectTrains(String info) {
-			final List<Train> trains = Utils.getTrainInfos(info);
-			int count = trains.size();
-			String[] items = new String[count];
-			boolean checkedItems[] = new boolean[count];
-			for (int i = 0; i < items.length; i++) {
-				items[i] = trains.get(i).toString();
-				checkedItems[i] = false;
-			}
-			final List<String> selectedTrainNumbers = new ArrayList<String>();
-			builder.setMultiChoiceItems(items, checkedItems,
-					new OnMultiChoiceClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which,
-								boolean isChecked) {
-							if (isChecked) {
-								selectedTrainNumbers.add(trains.get(which).name);
-							} else {
-								selectedTrainNumbers.remove(trains.get(which).name);
-							}
-						}
-					});
-			builder.setPositiveButton("确定",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							mSelectedTrainNumbers = selectedTrainNumbers;
-							Log.e("lkt", "selected train:"
-									+ mSelectedTrainNumbers.toString());
-						}
-					});
-			builder.create().show();
-		}
-
-		@JavascriptInterface
-		public void onCheckInfo(String info) {
-			final List<Train> trains = Utils.getTrainInfos(info);
-			boolean foundTicket = false;
-			for (int i = 0; i < trains.size(); i++) {
-				Train t = trains.get(i);
-				if (mSelectedTrainNumbers.contains(t.name) && t.hasSeat) {
-					foundTicket = true;
-					break;
-				}
-			}
-			if (foundTicket) {
-				onTicketFound();
-			} else {
-				startNextRefresh();
-			}
-		}
-
-		@JavascriptInterface
-		public void getRandcodePosition(int x, int y) {
-			randcodex = x;
-			randcodey = y;
-			Toast.makeText(MainActivity.this, "x:" + x + ",y:" + y,
-					Toast.LENGTH_LONG).show();
-		}
-	}
-
-	public void startNextRefresh() {
-		if (!isRefreshing) {
-			return;
-		}
-		tvSelectTrain.postDelayed(new Runnable() {
-			@Override
-			public void run() {
-				clickQuery();
-			}
-		}, 888);
-		tvSelectTrain.postDelayed(new Runnable() {
-			@Override
-			public void run() {
-				checkInfo();
-			}
-		}, 1666);
-	}
-
-	public void clickQuery() {
-		wv.loadUrl("javascript:document.getElementById('query_ticket').click();");
-	}
-
-	public void checkInfo() {
-		wv.loadUrl("javascript:window.getinfo.onCheckInfo(document.getElementById('queryLeftTable').innerHTML);");
-	}
-
+	@Override
 	public void onTicketFound() {
-		Log.e("lkt", "stopRefresh");
 		Toast.makeText(this, "ticket found !", Toast.LENGTH_LONG).show();
 		vibrator.vibrate(new long[] { 50, 100, 50, 100 }, 0);
 	}
 
 	@Override
-	protected void onDestroy() {
+	protected void onPause() {
 		wl.release();
-		super.onDestroy();
+		super.onPause();
 	}
 }
