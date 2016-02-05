@@ -1,5 +1,8 @@
 package me.lkt.getticket.page;
 
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -188,8 +191,28 @@ public class TicketListPage extends WebPage {
 			@Override
 			public void run() {
 				captureRandCodePic(x, y);
+				requestRandcodeValue();
 			}
 		}, 500);
+	}
+
+	protected void requestRandcodeValue() {
+		try {
+			URL url = new URL("http://api.yundama.com/api.php");
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.addRequestProperty("method", "upload");
+			conn.addRequestProperty("username", "tomatomaster");
+			conn.addRequestProperty("password", "1qazMKO0");
+			conn.addRequestProperty("codetype", "6701");
+			conn.addRequestProperty("appid", "");
+			conn.addRequestProperty("appkey", "");
+			conn.addRequestProperty("timeout", "20");
+			conn.addRequestProperty("file", null);
+			conn.connect();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void fillRandcode(String positionStr) {
